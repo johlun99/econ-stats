@@ -1,0 +1,95 @@
+export interface Transaction {
+  id: number
+  bookingDate: string
+  transactionDate: string
+  description: string
+  amount: number
+  balance: number
+  categoryId: number | null
+  categoryName: string | null
+  categoryColor: string | null
+  categoryIcon: string | null
+  merchantKey: string
+  isTransfer: boolean
+}
+
+export interface ImportResult {
+  totalRows: number
+  newTransactions: number
+  duplicatesSkipped: number
+  autoCategorized: number
+  uncategorized: number
+}
+
+export interface MerchantGroup {
+  merchantKey: string
+  count: number
+  totalAmount: number
+  firstDate: string
+  lastDate: string
+  transactions: Transaction[]
+}
+
+export interface Category {
+  id: number
+  name: string
+  color: string
+  icon: string
+  isIncome: boolean
+  isExpense: boolean
+  sortOrder: number
+}
+
+export interface CategoryRule {
+  id: number
+  merchantKey: string
+  categoryId: number
+  categoryName: string
+}
+
+export interface MonthlyStats {
+  month: string
+  totalExpenses: number
+  totalIncome: number
+  netSavings: number
+  savingsRate: number
+  avgDailySpend: number
+  monthOverMonth: number
+  categoryBreakdown: CategorySpend[]
+  topMerchants: MerchantSpend[]
+  largestExpenses: Transaction[]
+  dailySpending: DailySpend[]
+}
+
+export interface CategorySpend {
+  categoryId: number
+  categoryName: string
+  categoryColor: string
+  categoryIcon: string
+  total: number
+  count: number
+}
+
+export interface MerchantSpend {
+  merchantKey: string
+  total: number
+  count: number
+}
+
+export interface DailySpend {
+  date: string
+  total: number
+}
+
+export interface SpendingTrend {
+  month: string
+  expenses: number
+  income: number
+}
+
+export interface AvailableMonth {
+  month: string
+  label: string
+}
+
+export type Page = 'dashboard' | 'upload' | 'categorize' | 'categories' | 'transactions'
