@@ -1,16 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { GetTransactions, SearchTransactions, GetAvailableMonths } from '../../../wailsjs/go/app/App'
+  import { GetTransactions, SearchTransactions, GetAvailableMonths, GetCategories, UpdateTransactionCategory } from '../../../wailsjs/go/app/App'
   import MonthPicker from '../components/common/MonthPicker.svelte'
-  import type { Transaction, AvailableMonth } from '../types'
+  import type { Transaction, AvailableMonth, Category } from '../types'
   import { hexToRgba } from '../utils'
 
   let transactions: Transaction[] = $state([])
   let months: AvailableMonth[] = $state([])
+  let categories: Category[] = $state([])
   let selectedMonth = $state('')
   let searchTerm = $state('')
   let loading = $state(true)
   let filterType: 'all' | 'expenses' | 'income' | 'transfers' = $state('all')
+  let editingId: number | null = $state(null)
 
   let filteredTransactions = $derived.by(() => {
     let list = transactions
@@ -27,7 +29,9 @@
   async function load() {
     loading = true
     try {
-      months = (await GetAvailableMonths()) ?? []
+      const [m, c] = await Promise.all([GetAvailableMonths(), GetCategories()])
+      months = m ?? []
+      categories = c ?? []
       if (months.length > 0 && !selectedMonth) {
         selectedMonth = months[0].month
       }
@@ -35,6 +39,16 @@
     } finally {
       loading = false
     }
+  }
+
+  async function changeCategory(transaction: Transaction, categoryId: number | null) {
+    editingId = null
+    await UpdateTransactionCategory(transaction.id, categoryId)
+    const cat = categories.find(c => c.id === categoryId)
+    transaction.categoryId = categoryId
+    transaction.categoryName = cat?.name ?? null
+    transaction.categoryColor = cat?.color ?? null
+    transaction.categoryIcon = cat?.icon ?? null
   }
 
   async function fetchTransactions() {
@@ -56,10 +70,15 @@
     searchTimeout = setTimeout(fetchTransactions, 300)
   }
 
+  function handleWindowClick() {
+    if (editingId !== null) editingId = null
+  }
+
   onMount(load)
 </script>
 
-<div class="p-6">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="p-6" onclick={handleWindowClick}>
   <div class="flex items-center justify-between mb-6">
     <h2 class="text-2xl font-bold text-white">Transaktioner</h2>
     {#if months.length > 0}
@@ -119,16 +138,43 @@
             <tr class="border-t border-slate-700/50 hover:bg-slate-750">
               <td class="px-4 py-2.5 text-slate-400">{t.transactionDate}</td>
               <td class="px-4 py-2.5 text-slate-200">{t.description}</td>
-              <td class="px-4 py-2.5">
-                {#if t.categoryName}
-                  <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: {hexToRgba(t.categoryColor ?? '#6B7280', 0.12)}; color: {t.categoryColor}">
-                    {t.categoryIcon} {t.categoryName}
-                  </span>
-                {:else if t.isTransfer}
-                  <span class="text-xs text-slate-500">Överföring</span>
-                {:else}
-                  <span class="text-xs text-amber-500">Okategoriserad</span>
+              <td class="px-4 py-2.5 relative">
+                {#if editingId === t.id}
+                  <!-- svelte-ignore a11y_no_static_element_interactions -->
+                  <div class="absolute z-20 mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-xl py-1 max-h-64 overflow-y-auto w-56"
+                    onclick={(e) => e.stopPropagation()}>
+                    <button
+                      class="w-full text-left px-3 py-1.5 text-xs text-slate-400 hover:bg-slate-600 transition-colors"
+                      onclick={() => changeCategory(t, null)}
+                    >
+                      Ta bort kategori
+                    </button>
+                    {#each categories as cat}
+                      <button
+                        class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-600 transition-colors
+                          {cat.id === t.categoryId ? 'bg-slate-600/50' : ''}"
+                        style="color: {cat.color}"
+                        onclick={() => changeCategory(t, cat.id)}
+                      >
+                        {cat.icon} {cat.name}
+                      </button>
+                    {/each}
+                  </div>
                 {/if}
+                <button
+                  class="cursor-pointer hover:opacity-80 transition-opacity"
+                  onclick={(e) => { e.stopPropagation(); editingId = editingId === t.id ? null : t.id }}
+                >
+                  {#if t.categoryName}
+                    <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: {hexToRgba(t.categoryColor ?? '#6B7280', 0.12)}; color: {t.categoryColor}">
+                      {t.categoryIcon} {t.categoryName}
+                    </span>
+                  {:else if t.isTransfer}
+                    <span class="text-xs text-slate-500">Överföring</span>
+                  {:else}
+                    <span class="text-xs text-amber-500">Okategoriserad</span>
+                  {/if}
+                </button>
               </td>
               <td class="px-4 py-2.5 text-right font-medium
                 {t.amount < 0 ? 'text-red-400' : 'text-green-400'}">
