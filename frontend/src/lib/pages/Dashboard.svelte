@@ -14,6 +14,10 @@
   let trend: SpendingTrend[] = $state([])
   let loading = $state(true)
 
+  let yearTrend = $derived(
+    trend.filter(t => selectedMonth && t.month.startsWith(selectedMonth.slice(0, 4)))
+  )
+
   function fmt(n: number): string {
     return n.toLocaleString('sv-SE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' kr'
   }
@@ -23,7 +27,7 @@
     try {
       const [m, t] = await Promise.all([
         GetAvailableMonths(),
-        GetSpendingTrend(12),
+        GetSpendingTrend(0),
       ])
       months = m ?? []
       trend = t ?? []
@@ -96,10 +100,10 @@
     </div>
 
     <!-- Charts row 2 -->
-    {#if trend.length > 1}
+    {#if yearTrend.length > 1}
       <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
         <h3 class="text-sm font-semibold text-slate-300 mb-4">Inkomster vs Utgifter</h3>
-        <BarChart data={trend} />
+        <BarChart data={yearTrend} />
       </div>
     {/if}
 

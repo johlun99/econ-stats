@@ -209,7 +209,7 @@ func (s *Service) getDailySpending(month string) ([]models.DailySpend, error) {
 }
 
 func (s *Service) GetSpendingTrend(months int) ([]models.SpendingTrend, error) {
-	rows, err := s.db.Query(`
+	query := `
 		SELECT substr(t.transaction_date, 1, 7) as month,
 		       COALESCE(SUM(CASE WHEN t.is_transfer = 0 AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0)) THEN -t.amount ELSE 0 END), 0),
 		       COALESCE(SUM(CASE WHEN t.amount > 0 AND t.is_transfer = 0 AND (c.is_expense = 0 OR c.is_expense IS NULL) THEN t.amount ELSE 0 END), 0)
@@ -217,8 +217,13 @@ func (s *Service) GetSpendingTrend(months int) ([]models.SpendingTrend, error) {
 		LEFT JOIN categories c ON t.category_id = c.id
 		GROUP BY month
 		ORDER BY month DESC
-		LIMIT ?
-	`, months)
+	`
+	var args []interface{}
+	if months > 0 {
+		query += " LIMIT ?"
+		args = append(args, months)
+	}
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
