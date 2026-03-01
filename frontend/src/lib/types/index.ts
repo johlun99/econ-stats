@@ -94,4 +94,29 @@ export interface AvailableMonth {
   label: string
 }
 
-export type Page = 'dashboard' | 'upload' | 'categorize' | 'categories' | 'transactions'
+export interface YearlyStats {
+  year: string
+  totalExpenses: number
+  totalIncome: number
+  netSavings: number
+  savingsRate: number
+  avgMonthlySpend: number
+  yearOverYear: number
+  categoryBreakdown: CategorySpend[]
+  topMerchants: MerchantSpend[]
+  largestExpenses: Transaction[]
+  monthlySpending: MonthlySpend[]
+}
+
+export interface MonthlySpend {
+  month: string
+  total: number
+  income: number
+}
+
+export interface AvailableYear {
+  year: string
+  label: string
+}
+
+export type Page = 'dashboard' | 'yearly' | 'upload' | 'categorize' | 'categories' | 'transactions'

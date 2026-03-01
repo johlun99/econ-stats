@@ -14,6 +14,20 @@ export namespace models {
 	        this.label = source["label"];
 	    }
 	}
+	export class AvailableYear {
+	    year: string;
+	    label: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AvailableYear(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.year = source["year"];
+	        this.label = source["label"];
+	    }
+	}
 	export class Category {
 	    id: number;
 	    name: string;
@@ -206,6 +220,22 @@ export namespace models {
 	        this.count = source["count"];
 	    }
 	}
+	export class MonthlySpend {
+	    month: string;
+	    total: number;
+	    income: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new MonthlySpend(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.month = source["month"];
+	        this.total = source["total"];
+	        this.income = source["income"];
+	    }
+	}
 	export class MonthlyStats {
 	    month: string;
 	    totalExpenses: number;
@@ -271,6 +301,57 @@ export namespace models {
 	        this.expenses = source["expenses"];
 	        this.income = source["income"];
 	    }
+	}
+	
+	export class YearlyStats {
+	    year: string;
+	    totalExpenses: number;
+	    totalIncome: number;
+	    netSavings: number;
+	    savingsRate: number;
+	    avgMonthlySpend: number;
+	    yearOverYear: number;
+	    categoryBreakdown: CategorySpend[];
+	    topMerchants: MerchantSpend[];
+	    largestExpenses: Transaction[];
+	    monthlySpending: MonthlySpend[];
+	
+	    static createFrom(source: any = {}) {
+	        return new YearlyStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.year = source["year"];
+	        this.totalExpenses = source["totalExpenses"];
+	        this.totalIncome = source["totalIncome"];
+	        this.netSavings = source["netSavings"];
+	        this.savingsRate = source["savingsRate"];
+	        this.avgMonthlySpend = source["avgMonthlySpend"];
+	        this.yearOverYear = source["yearOverYear"];
+	        this.categoryBreakdown = this.convertValues(source["categoryBreakdown"], CategorySpend);
+	        this.topMerchants = this.convertValues(source["topMerchants"], MerchantSpend);
+	        this.largestExpenses = this.convertValues(source["largestExpenses"], Transaction);
+	        this.monthlySpending = this.convertValues(source["monthlySpending"], MonthlySpend);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

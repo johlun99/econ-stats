@@ -15,3 +15,11 @@ func (a *App) GetSpendingTrend(months int) ([]models.SpendingTrend, error) {
 func (a *App) GetAvailableMonths() ([]models.AvailableMonth, error) {
 	return a.statsSvc.GetAvailableMonths()
 }
+
+func (a *App) GetYearlyStats(year string) (*models.YearlyStats, error) {
+	return a.statsSvc.GetYearlyStats(year)
+}
+
+func (a *App) GetAvailableYears() ([]models.AvailableYear, error) {
+	return a.statsSvc.GetAvailableYears()
+}

@@ -44,3 +44,28 @@ type AvailableMonth struct {
 	Month string `json:"month"` // YYYY-MM
 	Label string `json:"label"` // "February 2026"
 }
+
+type YearlyStats struct {
+	Year              string          `json:"year"` // YYYY
+	TotalExpenses     float64         `json:"totalExpenses"`
+	TotalIncome       float64         `json:"totalIncome"`
+	NetSavings        float64         `json:"netSavings"`
+	SavingsRate       float64         `json:"savingsRate"`
+	AvgMonthlySpend   float64         `json:"avgMonthlySpend"`
+	YearOverYear      float64         `json:"yearOverYear"` // % change
+	CategoryBreakdown []CategorySpend `json:"categoryBreakdown"`
+	TopMerchants      []MerchantSpend `json:"topMerchants"`
+	LargestExpenses   []Transaction   `json:"largestExpenses"`
+	MonthlySpending   []MonthlySpend  `json:"monthlySpending"`
+}
+
+type MonthlySpend struct {
+	Month    string  `json:"month"` // YYYY-MM
+	Total    float64 `json:"total"`
+	Income   float64 `json:"income"`
+}
+
+type AvailableYear struct {
+	Year  string `json:"year"`  // YYYY
+	Label string `json:"label"` // "2026"
+}

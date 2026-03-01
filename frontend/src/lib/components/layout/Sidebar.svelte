@@ -10,6 +10,7 @@
 
   const navItems: { page: Page; label: string; icon: string }[] = [
     { page: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { page: 'yearly', label: 'Årsöversikt', icon: '📅' },
     { page: 'upload', label: 'Importera', icon: '📁' },
     { page: 'categorize', label: 'Kategorisera', icon: '🏷️' },
     { page: 'categories', label: 'Kategorier', icon: '⚙️' },

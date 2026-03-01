@@ -12,6 +12,8 @@ export function DeleteCategoryRule(arg1:number):Promise<void>;
 
 export function GetAvailableMonths():Promise<Array<models.AvailableMonth>>;
 
+export function GetAvailableYears():Promise<Array<models.AvailableYear>>;
+
 export function GetCategories():Promise<Array<models.Category>>;
 
 export function GetCategoryRules():Promise<Array<models.CategoryRule>>;
@@ -27,6 +29,8 @@ export function GetTransactions(arg1:string):Promise<Array<models.Transaction>>;
 export function GetUncategorizedCount():Promise<number>;
 
 export function GetUncategorizedMerchants():Promise<Array<models.MerchantGroup>>;
+
+export function GetYearlyStats(arg1:string):Promise<models.YearlyStats>;
 
 export function ImportFile(arg1:string):Promise<models.ImportResult>;
 

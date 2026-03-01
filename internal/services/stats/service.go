@@ -257,6 +257,115 @@ func (s *Service) GetAvailableMonths() ([]models.AvailableMonth, error) {
 	return result, rows.Err()
 }
 
+func (s *Service) GetYearlyStats(year string) (*models.YearlyStats, error) {
+	stats := &models.YearlyStats{Year: year}
+
+	// Total expenses (negative amounts, excluding transfers)
+	s.db.QueryRow(`
+		SELECT COALESCE(SUM(ABS(amount)), 0) FROM transactions
+		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
+	`, year+"%").Scan(&stats.TotalExpenses)
+
+	// Total income (positive amounts, excluding transfers)
+	s.db.QueryRow(`
+		SELECT COALESCE(SUM(amount), 0) FROM transactions
+		WHERE transaction_date LIKE ? AND amount > 0 AND is_transfer = 0
+	`, year+"%").Scan(&stats.TotalIncome)
+
+	stats.NetSavings = stats.TotalIncome - stats.TotalExpenses
+
+	if stats.TotalIncome > 0 {
+		stats.SavingsRate = stats.NetSavings / stats.TotalIncome * 100
+	}
+
+	// Average monthly spend
+	yearInt := 0
+	fmt.Sscanf(year, "%d", &yearInt)
+	now := time.Now()
+	monthsElapsed := 12
+	if yearInt == now.Year() {
+		monthsElapsed = int(now.Month())
+	}
+	if monthsElapsed > 0 {
+		stats.AvgMonthlySpend = stats.TotalExpenses / float64(monthsElapsed)
+	}
+
+	// Year-over-year change
+	prevYear := fmt.Sprintf("%d", yearInt-1)
+	var prevExpenses float64
+	s.db.QueryRow(`
+		SELECT COALESCE(SUM(ABS(amount)), 0) FROM transactions
+		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
+	`, prevYear+"%").Scan(&prevExpenses)
+
+	if prevExpenses > 0 {
+		stats.YearOverYear = (stats.TotalExpenses - prevExpenses) / prevExpenses * 100
+	}
+
+	// Category breakdown
+	stats.CategoryBreakdown, _ = s.getCategoryBreakdown(year)
+
+	// Top merchants
+	stats.TopMerchants, _ = s.getTopMerchants(year)
+
+	// Largest expenses
+	stats.LargestExpenses, _ = s.getLargestExpenses(year)
+
+	// Monthly spending within the year
+	stats.MonthlySpending, _ = s.getMonthlySpending(year)
+
+	return stats, nil
+}
+
+func (s *Service) getMonthlySpending(year string) ([]models.MonthlySpend, error) {
+	rows, err := s.db.Query(`
+		SELECT substr(transaction_date, 1, 7) as month,
+		       COALESCE(SUM(CASE WHEN amount < 0 AND is_transfer = 0 THEN ABS(amount) ELSE 0 END), 0),
+		       COALESCE(SUM(CASE WHEN amount > 0 AND is_transfer = 0 THEN amount ELSE 0 END), 0)
+		FROM transactions
+		WHERE transaction_date LIKE ?
+		GROUP BY month
+		ORDER BY month
+	`, year+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []models.MonthlySpend
+	for rows.Next() {
+		var ms models.MonthlySpend
+		if err := rows.Scan(&ms.Month, &ms.Total, &ms.Income); err != nil {
+			return nil, err
+		}
+		result = append(result, ms)
+	}
+	return result, rows.Err()
+}
+
+func (s *Service) GetAvailableYears() ([]models.AvailableYear, error) {
+	rows, err := s.db.Query(`
+		SELECT DISTINCT substr(transaction_date, 1, 4) as year
+		FROM transactions
+		ORDER BY year DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []models.AvailableYear
+	for rows.Next() {
+		var ay models.AvailableYear
+		if err := rows.Scan(&ay.Year); err != nil {
+			return nil, err
+		}
+		ay.Label = ay.Year
+		result = append(result, ay)
+	}
+	return result, rows.Err()
+}
+
 func prevMonthStr(month string) string {
 	t, err := time.Parse("2006-01", month)
 	if err != nil {

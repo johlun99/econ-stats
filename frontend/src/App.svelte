@@ -1,6 +1,7 @@
 <script lang="ts">
   import Sidebar from './lib/components/layout/Sidebar.svelte'
   import Dashboard from './lib/pages/Dashboard.svelte'
+  import YearlyStats from './lib/pages/YearlyStats.svelte'
   import Upload from './lib/pages/Upload.svelte'
   import Categorize from './lib/pages/Categorize.svelte'
   import Categories from './lib/pages/Categories.svelte'
@@ -32,6 +33,8 @@
     {#key currentPage}
       {#if currentPage === 'dashboard'}
         <Dashboard />
+      {:else if currentPage === 'yearly'}
+        <YearlyStats />
       {:else if currentPage === 'upload'}
         <Upload onComplete={() => { toast('Import klar!', 'success'); navigate('categorize') }} />
       {:else if currentPage === 'categorize'}

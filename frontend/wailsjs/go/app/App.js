@@ -22,6 +22,10 @@ export function GetAvailableMonths() {
   return window['go']['app']['App']['GetAvailableMonths']();
 }
 
+export function GetAvailableYears() {
+  return window['go']['app']['App']['GetAvailableYears']();
+}
+
 export function GetCategories() {
   return window['go']['app']['App']['GetCategories']();
 }
@@ -52,6 +56,10 @@ export function GetUncategorizedCount() {
 
 export function GetUncategorizedMerchants() {
   return window['go']['app']['App']['GetUncategorizedMerchants']();
+}
+
+export function GetYearlyStats(arg1) {
+  return window['go']['app']['App']['GetYearlyStats'](arg1);
 }
 
 export function ImportFile(arg1) {
