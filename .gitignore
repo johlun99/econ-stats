@@ -3,3 +3,5 @@ node_modules
 frontend/dist
 *.xlsx
 .claude/
+frontend/package.json.md5
+frontend/README.md
