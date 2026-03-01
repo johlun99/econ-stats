@@ -103,6 +103,8 @@ func (s *Service) Search(term string, month string) ([]models.Transaction, error
 func (s *Service) GetUncategorizedMerchants() ([]models.MerchantGroup, error) {
 	rows, err := s.db.Query(`
 		SELECT merchant_key, COUNT(*) as cnt, SUM(amount) as total,
+		       COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) as income_total,
+		       COALESCE(SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END), 0) as expense_total,
 		       MIN(transaction_date) as first_date, MAX(transaction_date) as last_date
 		FROM transactions
 		WHERE category_id IS NULL AND is_transfer = 0
@@ -117,7 +119,7 @@ func (s *Service) GetUncategorizedMerchants() ([]models.MerchantGroup, error) {
 	var groups []models.MerchantGroup
 	for rows.Next() {
 		var g models.MerchantGroup
-		if err := rows.Scan(&g.MerchantKey, &g.Count, &g.TotalAmount, &g.FirstDate, &g.LastDate); err != nil {
+		if err := rows.Scan(&g.MerchantKey, &g.Count, &g.TotalAmount, &g.IncomeTotal, &g.ExpenseTotal, &g.FirstDate, &g.LastDate); err != nil {
 			return nil, err
 		}
 		groups = append(groups, g)

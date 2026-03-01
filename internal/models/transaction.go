@@ -27,6 +27,8 @@ type MerchantGroup struct {
 	MerchantKey  string        `json:"merchantKey"`
 	Count        int           `json:"count"`
 	TotalAmount  float64       `json:"totalAmount"`
+	IncomeTotal  float64       `json:"incomeTotal"`
+	ExpenseTotal float64       `json:"expenseTotal"`
 	FirstDate    string        `json:"firstDate"`
 	LastDate     string        `json:"lastDate"`
 	Transactions []Transaction `json:"transactions"`

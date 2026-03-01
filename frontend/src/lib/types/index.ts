@@ -25,6 +25,8 @@ export interface MerchantGroup {
   merchantKey: string
   count: number
   totalAmount: number
+  incomeTotal: number
+  expenseTotal: number
   firstDate: string
   lastDate: string
   transactions: Transaction[]

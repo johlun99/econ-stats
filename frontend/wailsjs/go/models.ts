@@ -150,6 +150,8 @@ export namespace models {
 	    merchantKey: string;
 	    count: number;
 	    totalAmount: number;
+	    incomeTotal: number;
+	    expenseTotal: number;
 	    firstDate: string;
 	    lastDate: string;
 	    transactions: Transaction[];
@@ -163,6 +165,8 @@ export namespace models {
 	        this.merchantKey = source["merchantKey"];
 	        this.count = source["count"];
 	        this.totalAmount = source["totalAmount"];
+	        this.incomeTotal = source["incomeTotal"];
+	        this.expenseTotal = source["expenseTotal"];
 	        this.firstDate = source["firstDate"];
 	        this.lastDate = source["lastDate"];
 	        this.transactions = this.convertValues(source["transactions"], Transaction);
