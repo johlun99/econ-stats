@@ -35,3 +35,15 @@ func (a *App) GetDebtorTransactions(debtorID int64) ([]models.Transaction, error
 func (a *App) GetAllMerchantKeys() ([]string, error) {
 	return a.debtorSvc.GetAllMerchantKeys()
 }
+
+func (a *App) AddDebtorTransaction(debtorID int64, description string, amount float64, date string) error {
+	return a.debtorSvc.AddManualTransaction(debtorID, description, amount, date)
+}
+
+func (a *App) UpdateDebtorTransaction(id int64, description string, amount float64, date string) error {
+	return a.debtorSvc.UpdateManualTransaction(id, description, amount, date)
+}
+
+func (a *App) DeleteDebtorTransaction(id int64) error {
+	return a.debtorSvc.DeleteManualTransaction(id)
+}

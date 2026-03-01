@@ -11,6 +11,7 @@ export interface Transaction {
   categoryIcon: string | null
   merchantKey: string
   isTransfer: boolean
+  isManual: boolean
 }
 
 export interface ImportResult {

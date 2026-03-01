@@ -6,6 +6,10 @@ export function AddDebtorMerchantKey(arg1, arg2) {
   return window['go']['app']['App']['AddDebtorMerchantKey'](arg1, arg2);
 }
 
+export function AddDebtorTransaction(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['AddDebtorTransaction'](arg1, arg2, arg3, arg4);
+}
+
 export function CategorizeByMerchant(arg1, arg2) {
   return window['go']['app']['App']['CategorizeByMerchant'](arg1, arg2);
 }
@@ -28,6 +32,10 @@ export function DeleteCategoryRule(arg1) {
 
 export function DeleteDebtor(arg1) {
   return window['go']['app']['App']['DeleteDebtor'](arg1);
+}
+
+export function DeleteDebtorTransaction(arg1) {
+  return window['go']['app']['App']['DeleteDebtorTransaction'](arg1);
 }
 
 export function GetAllMerchantKeys() {
@@ -108,6 +116,10 @@ export function UpdateCategory(arg1, arg2, arg3, arg4, arg5, arg6) {
 
 export function UpdateDebtor(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['UpdateDebtor'](arg1, arg2, arg3, arg4);
+}
+
+export function UpdateDebtorTransaction(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['UpdateDebtorTransaction'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateTransactionCategory(arg1, arg2) {

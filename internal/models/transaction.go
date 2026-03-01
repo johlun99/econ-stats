@@ -13,6 +13,7 @@ type Transaction struct {
 	CategoryIcon    *string `json:"categoryIcon"`
 	MerchantKey     string  `json:"merchantKey"`
 	IsTransfer      bool    `json:"isTransfer"`
+	IsManual        bool    `json:"isManual"`
 }
 
 type ImportResult struct {

@@ -4,6 +4,8 @@ import {models} from '../models';
 
 export function AddDebtorMerchantKey(arg1:number,arg2:string):Promise<void>;
 
+export function AddDebtorTransaction(arg1:number,arg2:string,arg3:number,arg4:string):Promise<void>;
+
 export function CategorizeByMerchant(arg1:string,arg2:number):Promise<number>;
 
 export function CreateCategory(arg1:string,arg2:string,arg3:string,arg4:boolean,arg5:boolean):Promise<models.Category>;
@@ -15,6 +17,8 @@ export function DeleteCategory(arg1:number):Promise<void>;
 export function DeleteCategoryRule(arg1:number):Promise<void>;
 
 export function DeleteDebtor(arg1:number):Promise<void>;
+
+export function DeleteDebtorTransaction(arg1:number):Promise<void>;
 
 export function GetAllMerchantKeys():Promise<Array<string>>;
 
@@ -55,5 +59,7 @@ export function SelectAndImportFile():Promise<models.ImportResult>;
 export function UpdateCategory(arg1:number,arg2:string,arg3:string,arg4:string,arg5:boolean,arg6:boolean):Promise<void>;
 
 export function UpdateDebtor(arg1:number,arg2:string,arg3:string,arg4:string):Promise<void>;
+
+export function UpdateDebtorTransaction(arg1:number,arg2:string,arg3:number,arg4:string):Promise<void>;
 
 export function UpdateTransactionCategory(arg1:number,arg2:any):Promise<void>;

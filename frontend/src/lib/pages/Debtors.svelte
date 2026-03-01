@@ -8,7 +8,10 @@
     AddDebtorMerchantKey,
     RemoveDebtorMerchantKey,
     GetDebtorTransactions,
-    GetAllMerchantKeys
+    GetAllMerchantKeys,
+    AddDebtorTransaction,
+    UpdateDebtorTransaction,
+    DeleteDebtorTransaction
   } from '../../../wailsjs/go/app/App'
   import Modal from '../components/common/Modal.svelte'
   import type { DebtorDetail, Transaction } from '../types'
@@ -28,6 +31,13 @@
   let transactions: Transaction[] = $state([])
   let addingKeyForId: number | null = $state(null)
   let merchantKeySearch = $state('')
+
+  // Manual transaction form state
+  let addingTxForId: number | null = $state(null)
+  let editingTxId: number | null = $state(null)
+  let txFormDate = $state('')
+  let txFormDescription = $state('')
+  let txFormAmount: number | null = $state(null)
 
   // Form state
   let formName = $state('')
@@ -144,6 +154,57 @@
     }
   }
 
+  function openAddTx(debtorId: number) {
+    addingTxForId = debtorId
+    editingTxId = null
+    txFormDate = new Date().toISOString().slice(0, 10)
+    txFormDescription = ''
+    txFormAmount = null
+  }
+
+  function openEditTx(t: Transaction) {
+    editingTxId = t.id
+    addingTxForId = null
+    txFormDate = t.transactionDate
+    txFormDescription = t.description
+    txFormAmount = t.amount
+  }
+
+  function cancelTxForm() {
+    addingTxForId = null
+    editingTxId = null
+  }
+
+  async function handleSaveTx(debtorId: number) {
+    if (!txFormDate || !txFormDescription.trim() || txFormAmount == null || isNaN(txFormAmount)) return
+    const amount = txFormAmount
+    try {
+      if (editingTxId != null) {
+        await UpdateDebtorTransaction(editingTxId, txFormDescription, amount, txFormDate)
+        onToast('Transaktion uppdaterad', 'success')
+      } else {
+        await AddDebtorTransaction(debtorId, txFormDescription, amount, txFormDate)
+        onToast('Transaktion tillagd', 'success')
+      }
+      cancelTxForm()
+      const [result] = await Promise.all([GetDebtorTransactions(debtorId), load()])
+      transactions = result ?? []
+    } catch (e: any) {
+      onToast('Fel: ' + (e?.message || e), 'error')
+    }
+  }
+
+  async function handleDeleteTx(debtorId: number, txId: number) {
+    try {
+      await DeleteDebtorTransaction(txId)
+      onToast('Transaktion borttagen', 'success')
+      const [result] = await Promise.all([GetDebtorTransactions(debtorId), load()])
+      transactions = result ?? []
+    } catch (e: any) {
+      onToast('Fel: ' + (e?.message || e), 'error')
+    }
+  }
+
   function formatAmount(amount: number): string {
     return amount.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
@@ -253,44 +314,109 @@
           </div>
 
           <!-- Transaction toggle -->
-          {#if (d.merchantKeys ?? []).length > 0}
-            <button
-              class="w-full px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 border-t border-slate-700 transition-colors text-left"
-              onclick={() => toggleTransactions(d.id)}
-            >
-              {expandedId === d.id ? '▼ Dolj transaktioner' : '▶ Visa transaktioner'}
-            </button>
+          <button
+            class="w-full px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 border-t border-slate-700 transition-colors text-left"
+            onclick={() => toggleTransactions(d.id)}
+          >
+            {expandedId === d.id ? '▼ Dolj transaktioner' : '▶ Visa transaktioner'}
+          </button>
 
-            {#if expandedId === d.id}
-              <div class="border-t border-slate-700">
-                {#if transactions.length === 0}
-                  <div class="px-4 py-3 text-sm text-slate-500">Inga transaktioner</div>
-                {:else}
-                  <table class="w-full text-sm">
-                    <thead class="bg-slate-700/30">
-                      <tr>
-                        <th class="px-4 py-2 text-left text-slate-400 font-medium text-xs">Datum</th>
-                        <th class="px-4 py-2 text-left text-slate-400 font-medium text-xs">Beskrivning</th>
-                        <th class="px-4 py-2 text-left text-slate-400 font-medium text-xs">Handlare</th>
-                        <th class="px-4 py-2 text-right text-slate-400 font-medium text-xs">Belopp</th>
+          {#if expandedId === d.id}
+            <div class="border-t border-slate-700">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-700/30">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-slate-400 font-medium text-xs">Datum</th>
+                    <th class="px-4 py-2 text-left text-slate-400 font-medium text-xs">Beskrivning</th>
+                    <th class="px-4 py-2 text-left text-slate-400 font-medium text-xs">Typ</th>
+                    <th class="px-4 py-2 text-right text-slate-400 font-medium text-xs">Belopp</th>
+                    <th class="px-4 py-2 text-right text-slate-400 font-medium text-xs w-20"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each transactions as t}
+                    {#if editingTxId === t.id && t.isManual}
+                      <tr class="border-t border-slate-700/30 bg-slate-700/20">
+                        <td class="px-4 py-1.5">
+                          <input type="date" bind:value={txFormDate}
+                            class="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs focus:outline-none focus:border-blue-500" />
+                        </td>
+                        <td class="px-4 py-1.5">
+                          <input type="text" bind:value={txFormDescription} placeholder="Beskrivning"
+                            class="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs focus:outline-none focus:border-blue-500" />
+                        </td>
+                        <td class="px-4 py-1.5"></td>
+                        <td class="px-4 py-1.5">
+                          <input type="number" bind:value={txFormAmount} step="0.01" placeholder="0.00"
+                            class="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs text-right focus:outline-none focus:border-blue-500" />
+                        </td>
+                        <td class="px-4 py-1.5 text-right">
+                          <button class="text-green-400 hover:text-green-300 text-xs mr-1" onclick={() => handleSaveTx(d.id)}>Spara</button>
+                          <button class="text-slate-400 hover:text-white text-xs" onclick={cancelTxForm}>Avbryt</button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {#each transactions as t}
-                        <tr class="border-t border-slate-700/30">
-                          <td class="px-4 py-2 text-slate-400 text-xs">{t.transactionDate}</td>
-                          <td class="px-4 py-2 text-slate-300 text-xs">{t.description}</td>
-                          <td class="px-4 py-2 text-slate-400 text-xs capitalize">{t.merchantKey}</td>
-                          <td class="px-4 py-2 text-right text-xs font-medium {t.amount > 0 ? 'text-green-400' : 'text-red-400'}">
-                            {t.amount > 0 ? '+' : ''}{formatAmount(t.amount)} kr
-                          </td>
-                        </tr>
-                      {/each}
-                    </tbody>
-                  </table>
-                {/if}
-              </div>
-            {/if}
+                    {:else}
+                      <tr class="border-t border-slate-700/30">
+                        <td class="px-4 py-2 text-slate-400 text-xs">{t.transactionDate}</td>
+                        <td class="px-4 py-2 text-slate-300 text-xs">{t.description}</td>
+                        <td class="px-4 py-2 text-xs">
+                          {#if t.isManual}
+                            <span class="inline-flex items-center px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded text-[10px] font-medium">Manuell</span>
+                          {:else}
+                            <span class="text-slate-400 capitalize">{t.merchantKey}</span>
+                          {/if}
+                        </td>
+                        <td class="px-4 py-2 text-right text-xs font-medium {t.amount > 0 ? 'text-green-400' : 'text-red-400'}">
+                          {t.amount > 0 ? '+' : ''}{formatAmount(t.amount)} kr
+                        </td>
+                        <td class="px-4 py-2 text-right text-xs">
+                          {#if t.isManual}
+                            <button class="text-slate-400 hover:text-white mr-1" onclick={() => openEditTx(t)}>✏️</button>
+                            <button class="text-slate-400 hover:text-red-400" onclick={() => handleDeleteTx(d.id, t.id)}>🗑️</button>
+                          {/if}
+                        </td>
+                      </tr>
+                    {/if}
+                  {/each}
+
+                  <!-- Add transaction inline form -->
+                  {#if addingTxForId === d.id}
+                    <tr class="border-t border-slate-700/30 bg-slate-700/20">
+                      <td class="px-4 py-1.5">
+                        <input type="date" bind:value={txFormDate}
+                          class="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs focus:outline-none focus:border-blue-500" />
+                      </td>
+                      <td class="px-4 py-1.5">
+                        <input type="text" bind:value={txFormDescription} placeholder="Beskrivning"
+                          class="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs focus:outline-none focus:border-blue-500" />
+                      </td>
+                      <td class="px-4 py-1.5"></td>
+                      <td class="px-4 py-1.5">
+                        <input type="number" bind:value={txFormAmount} step="0.01" placeholder="0.00"
+                          class="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs text-right focus:outline-none focus:border-blue-500" />
+                      </td>
+                      <td class="px-4 py-1.5 text-right">
+                        <button class="text-green-400 hover:text-green-300 text-xs mr-1" onclick={() => handleSaveTx(d.id)}>Spara</button>
+                        <button class="text-slate-400 hover:text-white text-xs" onclick={cancelTxForm}>Avbryt</button>
+                      </td>
+                    </tr>
+                  {/if}
+                </tbody>
+              </table>
+
+              {#if transactions.length === 0 && addingTxForId !== d.id}
+                <div class="px-4 py-3 text-sm text-slate-500">Inga transaktioner</div>
+              {/if}
+
+              {#if addingTxForId !== d.id}
+                <button
+                  class="w-full px-4 py-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-700/30 transition-colors text-left"
+                  onclick={() => openAddTx(d.id)}
+                >
+                  + Lagg till transaktion
+                </button>
+              {/if}
+            </div>
           {/if}
         </div>
       {/each}

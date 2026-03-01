@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS debtor_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    debtor_id INTEGER NOT NULL REFERENCES debtors(id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    amount REAL NOT NULL,
+    transaction_date TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

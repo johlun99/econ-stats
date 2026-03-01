@@ -181,6 +181,7 @@ export namespace models {
 	    categoryIcon?: string;
 	    merchantKey: string;
 	    isTransfer: boolean;
+	    isManual: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Transaction(source);
@@ -200,6 +201,7 @@ export namespace models {
 	        this.categoryIcon = source["categoryIcon"];
 	        this.merchantKey = source["merchantKey"];
 	        this.isTransfer = source["isTransfer"];
+	        this.isManual = source["isManual"];
 	    }
 	}
 	export class MerchantGroup {
