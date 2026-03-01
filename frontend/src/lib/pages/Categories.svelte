@@ -3,6 +3,7 @@
   import { GetCategories, CreateCategory, UpdateCategory, DeleteCategory, GetCategoryRules, DeleteCategoryRule } from '../../../wailsjs/go/app/App'
   import Modal from '../components/common/Modal.svelte'
   import type { Category, CategoryRule } from '../types'
+  import { hexToRgba } from '../utils'
 
   interface Props {
     onToast: (message: string, type: 'success' | 'error' | 'info') => void
@@ -85,6 +86,14 @@
     }
   }
 
+  const defaultColors = [
+    '#EF4444', '#F97316', '#F59E0B', '#EAB308',
+    '#84CC16', '#22C55E', '#10B981', '#14B8A6',
+    '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6',
+    '#A855F7', '#D946EF', '#EC4899', '#F43F5E',
+    '#64748B', '#6B7280', '#78716C', '#FFFFFF',
+  ]
+
   const defaultIcons = ['📦', '🏠', '🛒', '🍽️', '🚗', '🎮', '💊', '📱', '🛍️', '💰', '🛡️', '💵', '💸', '🎬', '✈️', '🐕', '📚', '🏋️']
 
   onMount(load)
@@ -107,7 +116,7 @@
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-               style="background-color: {cat.color}20">
+               style="background-color: {hexToRgba(cat.color, 0.15)}">
             {cat.icon}
           </div>
           <div>
@@ -159,7 +168,7 @@
       <!-- Live preview -->
       <div class="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg">
         <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-             style="background-color: {formColor}20">
+             style="background-color: {hexToRgba(formColor, 0.15)}">
           {formIcon}
         </div>
         <span class="text-white font-medium">{formName || 'Kategorinamn'}</span>
@@ -182,7 +191,7 @@
             <button
               class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors
                 {formIcon === icon ? 'ring-2' : 'bg-slate-700 hover:bg-slate-600'}"
-              style={formIcon === icon ? `background-color: ${formColor}30; ring-color: ${formColor}; outline-color: ${formColor}; box-shadow: 0 0 0 2px ${formColor}` : ''}
+              style={formIcon === icon ? `background-color: ${hexToRgba(formColor, 0.2)}; box-shadow: 0 0 0 2px ${formColor}` : ''}
               onclick={() => formIcon = icon}
             >
               {icon}
@@ -193,8 +202,25 @@
 
       <div>
         <label class="block text-sm text-slate-400 mb-1">Färg</label>
-        <input type="color" bind:value={formColor}
-               class="w-full h-10 rounded-lg border border-slate-600 bg-slate-700 cursor-pointer" />
+        <div class="flex flex-wrap gap-2">
+          {#each defaultColors as color}
+            <button
+              class="w-8 h-8 rounded-lg transition-transform {formColor === color ? 'ring-2 ring-white scale-110' : 'hover:scale-105'}"
+              style="background-color: {color}"
+              onclick={() => formColor = color}
+            ></button>
+          {/each}
+        </div>
+        <input
+          type="text"
+          value={formColor}
+          oninput={(e) => {
+            const v = (e.currentTarget as HTMLInputElement).value
+            if (/^#[0-9a-fA-F]{6}$/.test(v)) formColor = v
+          }}
+          class="mt-2 w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-blue-500"
+          placeholder="#FF0000"
+        />
       </div>
 
       <div class="space-y-2">

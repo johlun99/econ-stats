@@ -3,6 +3,7 @@
   import { GetTransactions, SearchTransactions, GetAvailableMonths } from '../../../wailsjs/go/app/App'
   import MonthPicker from '../components/common/MonthPicker.svelte'
   import type { Transaction, AvailableMonth } from '../types'
+  import { hexToRgba } from '../utils'
 
   let transactions: Transaction[] = $state([])
   let months: AvailableMonth[] = $state([])
@@ -120,7 +121,7 @@
               <td class="px-4 py-2.5 text-slate-200">{t.description}</td>
               <td class="px-4 py-2.5">
                 {#if t.categoryName}
-                  <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: {t.categoryColor}20; color: {t.categoryColor}">
+                  <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: {hexToRgba(t.categoryColor ?? '#6B7280', 0.12)}; color: {t.categoryColor}">
                     {t.categoryIcon} {t.categoryName}
                   </span>
                 {:else if t.isTransfer}
