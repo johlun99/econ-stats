@@ -106,6 +106,46 @@ export namespace models {
 	        this.total = source["total"];
 	    }
 	}
+	export class Debtor {
+	    id: number;
+	    name: string;
+	    icon: string;
+	    color: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Debtor(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.icon = source["icon"];
+	        this.color = source["color"];
+	    }
+	}
+	export class DebtorDetail {
+	    id: number;
+	    name: string;
+	    icon: string;
+	    color: string;
+	    merchantKeys: string[];
+	    balance: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DebtorDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.icon = source["icon"];
+	        this.color = source["color"];
+	        this.merchantKeys = source["merchantKeys"];
+	        this.balance = source["balance"];
+	    }
+	}
 	export class ImportResult {
 	    totalRows: number;
 	    newTransactions: number;

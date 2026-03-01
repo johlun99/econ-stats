@@ -7,6 +7,7 @@ import (
 	"econ-stats/internal/database"
 	"econ-stats/internal/services/categorizer"
 	"econ-stats/internal/services/category"
+	"econ-stats/internal/services/debtor"
 	"econ-stats/internal/services/stats"
 	"econ-stats/internal/services/transaction"
 )
@@ -18,6 +19,7 @@ type App struct {
 	categorySvc    *category.Service
 	categorizerEng *categorizer.Engine
 	statsSvc       *stats.Service
+	debtorSvc      *debtor.Service
 }
 
 func NewApp() *App {
@@ -37,6 +39,7 @@ func (a *App) Startup(ctx context.Context) {
 	a.categorySvc = category.NewService(db)
 	a.categorizerEng = categorizer.NewEngine(a.categorySvc, a.transactionSvc)
 	a.statsSvc = stats.NewService(db)
+	a.debtorSvc = debtor.NewService(db)
 }
 
 func (a *App) Shutdown(ctx context.Context) {

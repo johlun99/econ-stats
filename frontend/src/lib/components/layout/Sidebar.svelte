@@ -15,6 +15,7 @@
     { page: 'categorize', label: 'Kategorisera', icon: '🏷️' },
     { page: 'categories', label: 'Kategorier', icon: '⚙️' },
     { page: 'transactions', label: 'Transaktioner', icon: '📋' },
+    { page: 'debtors', label: 'Skulder', icon: '🤝' },
   ]
 </script>
 

@@ -119,4 +119,16 @@ export interface AvailableYear {
   label: string
 }
 
-export type Page = 'dashboard' | 'yearly' | 'upload' | 'categorize' | 'categories' | 'transactions'
+export interface Debtor {
+  id: number
+  name: string
+  icon: string
+  color: string
+}
+
+export interface DebtorDetail extends Debtor {
+  merchantKeys: string[]
+  balance: number
+}
+
+export type Page = 'dashboard' | 'yearly' | 'upload' | 'categorize' | 'categories' | 'transactions' | 'debtors'

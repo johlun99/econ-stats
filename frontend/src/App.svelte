@@ -6,6 +6,7 @@
   import Categorize from './lib/pages/Categorize.svelte'
   import Categories from './lib/pages/Categories.svelte'
   import Transactions from './lib/pages/Transactions.svelte'
+  import Debtors from './lib/pages/Debtors.svelte'
   import Toast from './lib/components/common/Toast.svelte'
   import type { Page } from './lib/types'
 
@@ -43,6 +44,8 @@
         <Categories onToast={toast} />
       {:else if currentPage === 'transactions'}
         <Transactions />
+      {:else if currentPage === 'debtors'}
+        <Debtors onToast={toast} />
       {/if}
     {/key}
   </main>
