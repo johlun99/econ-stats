@@ -1,0 +1,1 @@
+ALTER TABLE debtors ADD COLUMN pinned_to_dashboard INTEGER NOT NULL DEFAULT 0;

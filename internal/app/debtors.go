@@ -8,6 +8,14 @@ func (a *App) GetDebtors() ([]models.DebtorDetail, error) {
 	return a.debtorSvc.GetAll()
 }
 
+func (a *App) ToggleDebtorPinned(id int64, pinned bool) error {
+	return a.debtorSvc.TogglePinned(id, pinned)
+}
+
+func (a *App) GetPinnedDebtors() ([]models.DebtorDetail, error) {
+	return a.debtorSvc.GetPinned()
+}
+
 func (a *App) CreateDebtor(name, icon, color string) (*models.Debtor, error) {
 	return a.debtorSvc.Create(name, icon, color)
 }

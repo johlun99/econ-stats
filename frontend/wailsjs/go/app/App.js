@@ -74,6 +74,10 @@ export function GetMonthlyStats(arg1) {
   return window['go']['app']['App']['GetMonthlyStats'](arg1);
 }
 
+export function GetPinnedDebtors() {
+  return window['go']['app']['App']['GetPinnedDebtors']();
+}
+
 export function GetSpendingTrend(arg1) {
   return window['go']['app']['App']['GetSpendingTrend'](arg1);
 }
@@ -108,6 +112,10 @@ export function SearchTransactions(arg1, arg2) {
 
 export function SelectAndImportFile() {
   return window['go']['app']['App']['SelectAndImportFile']();
+}
+
+export function ToggleDebtorPinned(arg1, arg2) {
+  return window['go']['app']['App']['ToggleDebtorPinned'](arg1, arg2);
 }
 
 export function UpdateCategory(arg1, arg2, arg3, arg4, arg5, arg6) {

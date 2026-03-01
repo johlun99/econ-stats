@@ -131,6 +131,7 @@ export interface Debtor {
 export interface DebtorDetail extends Debtor {
   merchantKeys: string[]
   balance: number
+  pinnedToDashboard: boolean
 }
 
 export type Page = 'dashboard' | 'yearly' | 'upload' | 'categorize' | 'categories' | 'transactions' | 'debtors'

@@ -11,7 +11,8 @@
     GetAllMerchantKeys,
     AddDebtorTransaction,
     UpdateDebtorTransaction,
-    DeleteDebtorTransaction
+    DeleteDebtorTransaction,
+    ToggleDebtorPinned
   } from '../../../wailsjs/go/app/App'
   import Modal from '../components/common/Modal.svelte'
   import type { DebtorDetail, Transaction } from '../types'
@@ -205,6 +206,15 @@
     }
   }
 
+  async function handleTogglePin(d: DebtorDetail) {
+    try {
+      await ToggleDebtorPinned(d.id, !d.pinnedToDashboard)
+      await load()
+    } catch (e: any) {
+      onToast('Fel: ' + (e?.message || e), 'error')
+    }
+  }
+
   function formatAmount(amount: number): string {
     return amount.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
@@ -259,6 +269,15 @@
                 </div>
               </div>
               <div class="flex gap-1">
+                <button
+                  class="p-2 rounded transition-colors {d.pinnedToDashboard ? 'text-yellow-400 hover:text-yellow-300 bg-yellow-400/10' : 'text-slate-500 hover:text-white opacity-40 hover:opacity-100'}"
+                  onclick={() => handleTogglePin(d)}
+                  title={d.pinnedToDashboard ? 'Ta bort från dashboard' : 'Fäst på dashboard'}
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill={d.pinnedToDashboard ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 17v5M9 2h6l-1 7h4l-5 8h-2l-5-8h4z" />
+                  </svg>
+                </button>
                 <button class="p-2 text-slate-400 hover:text-white rounded" onclick={() => openEdit(d)}>✏️</button>
                 <button class="p-2 text-slate-400 hover:text-red-400 rounded" onclick={() => handleDelete(d.id)}>🗑️</button>
               </div>

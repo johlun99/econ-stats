@@ -9,8 +9,9 @@ type Debtor struct {
 
 type DebtorDetail struct {
 	Debtor
-	MerchantKeys []string `json:"merchantKeys"`
-	Balance      float64  `json:"balance"`
+	MerchantKeys       []string `json:"merchantKeys"`
+	Balance            float64  `json:"balance"`
+	PinnedToDashboard  bool     `json:"pinnedToDashboard"`
 }
 
 type DebtorTransaction struct {

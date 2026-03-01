@@ -1,17 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { GetMonthlyStats, GetSpendingTrend, GetAvailableMonths } from '../../../wailsjs/go/app/App'
+  import { GetMonthlyStats, GetSpendingTrend, GetAvailableMonths, GetPinnedDebtors } from '../../../wailsjs/go/app/App'
   import StatCard from '../components/common/StatCard.svelte'
   import MonthPicker from '../components/common/MonthPicker.svelte'
   import DoughnutChart from '../components/charts/DoughnutChart.svelte'
   import BarChart from '../components/charts/BarChart.svelte'
   import LineChart from '../components/charts/LineChart.svelte'
-  import type { MonthlyStats, AvailableMonth, SpendingTrend } from '../types'
+  import type { MonthlyStats, AvailableMonth, SpendingTrend, DebtorDetail } from '../types'
+  import { hexToRgba } from '../utils'
 
   let stats: MonthlyStats | null = $state(null)
   let months: AvailableMonth[] = $state([])
   let selectedMonth = $state('')
   let trend: SpendingTrend[] = $state([])
+  let pinnedDebtors: DebtorDetail[] = $state([])
   let loading = $state(true)
 
   let yearTrend = $derived(
@@ -25,12 +27,14 @@
   async function loadData() {
     loading = true
     try {
-      const [m, t] = await Promise.all([
+      const [m, t, pd] = await Promise.all([
         GetAvailableMonths(),
         GetSpendingTrend(0),
+        GetPinnedDebtors(),
       ])
       months = m ?? []
       trend = t ?? []
+      pinnedDebtors = pd ?? []
       if (months.length > 0 && !selectedMonth) {
         selectedMonth = months[0].month
       }
@@ -77,6 +81,32 @@
       <StatCard label="Sparkvot" value={stats.savingsRate.toFixed(1) + '%'} icon="📈" />
       <StatCard label="Snittutgift/dag" value={fmt(stats.avgDailySpend)} icon="📅" />
     </div>
+
+    <!-- Pinned debtors -->
+    {#if pinnedDebtors.length > 0}
+      <div>
+        <h3 class="text-sm font-semibold text-slate-300 mb-3">Fastnålade skulder</h3>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {#each pinnedDebtors as d}
+            <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                   style="background-color: {hexToRgba(d.color, 0.15)}">
+                {d.icon}
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm text-white font-medium truncate">{d.name}</div>
+                <div class="text-lg font-semibold {d.balance > 0 ? 'text-green-400' : d.balance < 0 ? 'text-red-400' : 'text-slate-400'}">
+                  {d.balance > 0 ? '+' : ''}{fmt(d.balance)}
+                </div>
+                <div class="text-xs {d.balance > 0 ? 'text-green-400/70' : d.balance < 0 ? 'text-red-400/70' : 'text-slate-500'}">
+                  {d.balance > 0 ? 'De ar skyldiga dig' : d.balance < 0 ? 'Du ar skyldig dem' : 'Kvitt'}
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
 
     <!-- Charts row 1 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

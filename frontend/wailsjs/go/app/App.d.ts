@@ -38,6 +38,8 @@ export function GetMerchantTransactions(arg1:string):Promise<Array<models.Transa
 
 export function GetMonthlyStats(arg1:string):Promise<models.MonthlyStats>;
 
+export function GetPinnedDebtors():Promise<Array<models.DebtorDetail>>;
+
 export function GetSpendingTrend(arg1:number):Promise<Array<models.SpendingTrend>>;
 
 export function GetTransactions(arg1:string):Promise<Array<models.Transaction>>;
@@ -55,6 +57,8 @@ export function RemoveDebtorMerchantKey(arg1:number,arg2:string):Promise<void>;
 export function SearchTransactions(arg1:string,arg2:string):Promise<Array<models.Transaction>>;
 
 export function SelectAndImportFile():Promise<models.ImportResult>;
+
+export function ToggleDebtorPinned(arg1:number,arg2:boolean):Promise<void>;
 
 export function UpdateCategory(arg1:number,arg2:string,arg3:string,arg4:string,arg5:boolean,arg6:boolean):Promise<void>;
 

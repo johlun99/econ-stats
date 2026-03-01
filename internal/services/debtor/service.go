@@ -17,7 +17,7 @@ func NewService(db *sql.DB) *Service {
 }
 
 func (s *Service) GetAll() ([]models.DebtorDetail, error) {
-	rows, err := s.db.Query("SELECT id, name, icon, color FROM debtors ORDER BY name")
+	rows, err := s.db.Query("SELECT id, name, icon, color, pinned_to_dashboard FROM debtors ORDER BY name")
 	if err != nil {
 		return nil, fmt.Errorf("query debtors: %w", err)
 	}
@@ -26,8 +26,49 @@ func (s *Service) GetAll() ([]models.DebtorDetail, error) {
 	var debtors []models.DebtorDetail
 	for rows.Next() {
 		var d models.DebtorDetail
-		if err := rows.Scan(&d.ID, &d.Name, &d.Icon, &d.Color); err != nil {
+		if err := rows.Scan(&d.ID, &d.Name, &d.Icon, &d.Color, &d.PinnedToDashboard); err != nil {
 			return nil, fmt.Errorf("scan debtor: %w", err)
+		}
+		debtors = append(debtors, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range debtors {
+		keys, err := s.getMerchantKeys(debtors[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		debtors[i].MerchantKeys = keys
+
+		balance, err := s.computeBalance(debtors[i].ID, keys)
+		if err != nil {
+			return nil, err
+		}
+		debtors[i].Balance = balance
+	}
+
+	return debtors, nil
+}
+
+func (s *Service) TogglePinned(id int64, pinned bool) error {
+	_, err := s.db.Exec("UPDATE debtors SET pinned_to_dashboard=? WHERE id=?", pinned, id)
+	return err
+}
+
+func (s *Service) GetPinned() ([]models.DebtorDetail, error) {
+	rows, err := s.db.Query("SELECT id, name, icon, color, pinned_to_dashboard FROM debtors WHERE pinned_to_dashboard=1 ORDER BY name")
+	if err != nil {
+		return nil, fmt.Errorf("query pinned debtors: %w", err)
+	}
+	defer rows.Close()
+
+	var debtors []models.DebtorDetail
+	for rows.Next() {
+		var d models.DebtorDetail
+		if err := rows.Scan(&d.ID, &d.Name, &d.Icon, &d.Color, &d.PinnedToDashboard); err != nil {
+			return nil, fmt.Errorf("scan pinned debtor: %w", err)
 		}
 		debtors = append(debtors, d)
 	}

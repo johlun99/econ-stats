@@ -131,6 +131,7 @@ export namespace models {
 	    color: string;
 	    merchantKeys: string[];
 	    balance: number;
+	    pinnedToDashboard: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new DebtorDetail(source);
@@ -144,6 +145,7 @@ export namespace models {
 	        this.color = source["color"];
 	        this.merchantKeys = source["merchantKeys"];
 	        this.balance = source["balance"];
+	        this.pinnedToDashboard = source["pinnedToDashboard"];
 	    }
 	}
 	export class ImportResult {
