@@ -16,11 +16,12 @@ type Transaction struct {
 }
 
 type ImportResult struct {
-	TotalRows        int `json:"totalRows"`
-	NewTransactions  int `json:"newTransactions"`
+	TotalRows         int `json:"totalRows"`
+	NewTransactions   int `json:"newTransactions"`
 	DuplicatesSkipped int `json:"duplicatesSkipped"`
-	AutoCategorized  int `json:"autoCategorized"`
-	Uncategorized    int `json:"uncategorized"`
+	Updated           int `json:"updated"`
+	AutoCategorized   int `json:"autoCategorized"`
+	Uncategorized     int `json:"uncategorized"`
 }
 
 type MerchantGroup struct {

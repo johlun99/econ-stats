@@ -150,6 +150,7 @@ export namespace models {
 	    totalRows: number;
 	    newTransactions: number;
 	    duplicatesSkipped: number;
+	    updated: number;
 	    autoCategorized: number;
 	    uncategorized: number;
 	
@@ -162,6 +163,7 @@ export namespace models {
 	        this.totalRows = source["totalRows"];
 	        this.newTransactions = source["newTransactions"];
 	        this.duplicatesSkipped = source["duplicatesSkipped"];
+	        this.updated = source["updated"];
 	        this.autoCategorized = source["autoCategorized"];
 	        this.uncategorized = source["uncategorized"];
 	    }

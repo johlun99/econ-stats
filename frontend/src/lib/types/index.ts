@@ -17,6 +17,7 @@ export interface ImportResult {
   totalRows: number
   newTransactions: number
   duplicatesSkipped: number
+  updated: number
   autoCategorized: number
   uncategorized: number
 }

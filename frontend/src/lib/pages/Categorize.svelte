@@ -19,13 +19,13 @@
   function categoriesForMerchant(m: MerchantGroup): Category[] {
     const hasIncome = m.incomeTotal > 0
     const hasExpense = m.expenseTotal > 0
-    if (hasIncome && hasExpense) {
-      return allCategories.filter(c => c.isIncome && c.isExpense)
+    if (hasIncome && !hasExpense) {
+      return allCategories.filter(c => c.isIncome || c.isExpense)
     }
-    if (hasIncome) {
-      return allCategories.filter(c => c.isIncome)
+    if (hasExpense && !hasIncome) {
+      return allCategories.filter(c => c.isExpense)
     }
-    return allCategories.filter(c => c.isExpense)
+    return allCategories.filter(c => c.isIncome || c.isExpense)
   }
 
   async function load() {

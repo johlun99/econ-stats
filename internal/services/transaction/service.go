@@ -27,30 +27,44 @@ func (s *Service) Import(transactions []models.Transaction) (*models.ImportResul
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.Prepare(`
-		INSERT OR IGNORE INTO transactions
+	existsStmt, err := tx.Prepare(`SELECT 1 FROM transactions WHERE transaction_date = ? AND description = ? AND amount = ?`)
+	if err != nil {
+		return nil, fmt.Errorf("prepare exists: %w", err)
+	}
+	defer existsStmt.Close()
+
+	upsertStmt, err := tx.Prepare(`
+		INSERT INTO transactions
 			(booking_date, transaction_date, description, amount, balance, merchant_key, is_transfer)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(transaction_date, description, amount) DO UPDATE SET
+			booking_date = excluded.booking_date,
+			balance = excluded.balance,
+			is_transfer = excluded.is_transfer
 	`)
 	if err != nil {
-		return nil, fmt.Errorf("prepare: %w", err)
+		return nil, fmt.Errorf("prepare upsert: %w", err)
 	}
-	defer stmt.Close()
+	defer upsertStmt.Close()
 
 	for _, t := range transactions {
 		isTransfer := 0
 		if t.IsTransfer {
 			isTransfer = 1
 		}
-		res, err := stmt.Exec(t.BookingDate, t.TransactionDate, t.Description, t.Amount, t.Balance, t.MerchantKey, isTransfer)
-		if err != nil {
-			return nil, fmt.Errorf("insert: %w", err)
+
+		var exists int
+		err := existsStmt.QueryRow(t.TransactionDate, t.Description, t.Amount).Scan(&exists)
+		alreadyExists := err == nil
+
+		if _, err := upsertStmt.Exec(t.BookingDate, t.TransactionDate, t.Description, t.Amount, t.Balance, t.MerchantKey, isTransfer); err != nil {
+			return nil, fmt.Errorf("upsert: %w", err)
 		}
-		rowsAffected, _ := res.RowsAffected()
-		if rowsAffected > 0 {
-			result.NewTransactions++
+
+		if alreadyExists {
+			result.Updated++
 		} else {
-			result.DuplicatesSkipped++
+			result.NewTransactions++
 		}
 	}
 

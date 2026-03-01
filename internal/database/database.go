@@ -19,6 +19,9 @@ var migration002 string
 //go:embed migrations/003_debtors.sql
 var migration003 string
 
+//go:embed migrations/004_transaction_unique_key.sql
+var migration004 string
+
 func Open() (*sql.DB, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -69,6 +72,7 @@ func migrate(db *sql.DB) error {
 		{1, migration001},
 		{2, migration002},
 		{3, migration003},
+		{4, migration004},
 	}
 
 	for _, m := range migrations {

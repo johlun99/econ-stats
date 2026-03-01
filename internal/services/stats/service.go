@@ -19,16 +19,20 @@ func NewService(db *sql.DB) *Service {
 func (s *Service) GetMonthlyStats(month string) (*models.MonthlyStats, error) {
 	stats := &models.MonthlyStats{Month: month}
 
-	// Total expenses (negative amounts, excluding transfers)
+	// Total expenses (negative amounts + returns in expense categories, excluding transfers)
 	s.db.QueryRow(`
-		SELECT COALESCE(SUM(ABS(amount)), 0) FROM transactions
-		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
+		SELECT COALESCE(SUM(-t.amount), 0) FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
 	`, month+"%").Scan(&stats.TotalExpenses)
 
-	// Total income (positive amounts, excluding transfers)
+	// Total income (positive amounts, excluding transfers and returns in expense categories)
 	s.db.QueryRow(`
-		SELECT COALESCE(SUM(amount), 0) FROM transactions
-		WHERE transaction_date LIKE ? AND amount > 0 AND is_transfer = 0
+		SELECT COALESCE(SUM(t.amount), 0) FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.amount > 0 AND t.is_transfer = 0
+		  AND (c.is_expense = 0 OR c.is_expense IS NULL)
 	`, month+"%").Scan(&stats.TotalIncome)
 
 	stats.NetSavings = stats.TotalIncome - stats.TotalExpenses
@@ -56,8 +60,10 @@ func (s *Service) GetMonthlyStats(month string) (*models.MonthlyStats, error) {
 	prevMonth := prevMonthStr(month)
 	var prevExpenses float64
 	s.db.QueryRow(`
-		SELECT COALESCE(SUM(ABS(amount)), 0) FROM transactions
-		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
+		SELECT COALESCE(SUM(-t.amount), 0) FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
 	`, prevMonth+"%").Scan(&prevExpenses)
 
 	if prevExpenses > 0 {
@@ -83,12 +89,14 @@ func (s *Service) getCategoryBreakdown(month string) ([]models.CategorySpend, er
 	rows, err := s.db.Query(`
 		SELECT COALESCE(t.category_id, 0), COALESCE(c.name, 'Okategoriserad'),
 		       COALESCE(c.color, '#9CA3AF'), COALESCE(c.icon, '❓'),
-		       SUM(ABS(t.amount)), COUNT(*)
+		       SUM(-t.amount), COUNT(*)
 		FROM transactions t
 		LEFT JOIN categories c ON t.category_id = c.id
-		WHERE t.transaction_date LIKE ? AND t.amount < 0 AND t.is_transfer = 0
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
 		GROUP BY t.category_id
-		ORDER BY SUM(ABS(t.amount)) DESC
+		HAVING SUM(-t.amount) > 0
+		ORDER BY SUM(-t.amount) DESC
 	`, month+"%")
 	if err != nil {
 		return nil, err
@@ -108,11 +116,14 @@ func (s *Service) getCategoryBreakdown(month string) ([]models.CategorySpend, er
 
 func (s *Service) getTopMerchants(month string) ([]models.MerchantSpend, error) {
 	rows, err := s.db.Query(`
-		SELECT merchant_key, SUM(ABS(amount)), COUNT(*)
-		FROM transactions
-		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
-		GROUP BY merchant_key
-		ORDER BY SUM(ABS(amount)) DESC
+		SELECT t.merchant_key, SUM(-t.amount), COUNT(*)
+		FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
+		GROUP BY t.merchant_key
+		HAVING SUM(-t.amount) > 0
+		ORDER BY SUM(-t.amount) DESC
 		LIMIT 10
 	`, month+"%")
 	if err != nil {
@@ -172,11 +183,14 @@ func (s *Service) getLargestExpenses(month string) ([]models.Transaction, error)
 
 func (s *Service) getDailySpending(month string) ([]models.DailySpend, error) {
 	rows, err := s.db.Query(`
-		SELECT transaction_date, SUM(ABS(amount))
-		FROM transactions
-		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
-		GROUP BY transaction_date
-		ORDER BY transaction_date
+		SELECT t.transaction_date, SUM(-t.amount)
+		FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
+		GROUP BY t.transaction_date
+		HAVING SUM(-t.amount) > 0
+		ORDER BY t.transaction_date
 	`, month+"%")
 	if err != nil {
 		return nil, err
@@ -196,10 +210,11 @@ func (s *Service) getDailySpending(month string) ([]models.DailySpend, error) {
 
 func (s *Service) GetSpendingTrend(months int) ([]models.SpendingTrend, error) {
 	rows, err := s.db.Query(`
-		SELECT substr(transaction_date, 1, 7) as month,
-		       COALESCE(SUM(CASE WHEN amount < 0 AND is_transfer = 0 THEN ABS(amount) ELSE 0 END), 0),
-		       COALESCE(SUM(CASE WHEN amount > 0 AND is_transfer = 0 THEN amount ELSE 0 END), 0)
-		FROM transactions
+		SELECT substr(t.transaction_date, 1, 7) as month,
+		       COALESCE(SUM(CASE WHEN t.is_transfer = 0 AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0)) THEN -t.amount ELSE 0 END), 0),
+		       COALESCE(SUM(CASE WHEN t.amount > 0 AND t.is_transfer = 0 AND (c.is_expense = 0 OR c.is_expense IS NULL) THEN t.amount ELSE 0 END), 0)
+		FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
 		GROUP BY month
 		ORDER BY month DESC
 		LIMIT ?
@@ -260,16 +275,20 @@ func (s *Service) GetAvailableMonths() ([]models.AvailableMonth, error) {
 func (s *Service) GetYearlyStats(year string) (*models.YearlyStats, error) {
 	stats := &models.YearlyStats{Year: year}
 
-	// Total expenses (negative amounts, excluding transfers)
+	// Total expenses (negative amounts + returns in expense categories, excluding transfers)
 	s.db.QueryRow(`
-		SELECT COALESCE(SUM(ABS(amount)), 0) FROM transactions
-		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
+		SELECT COALESCE(SUM(-t.amount), 0) FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
 	`, year+"%").Scan(&stats.TotalExpenses)
 
-	// Total income (positive amounts, excluding transfers)
+	// Total income (positive amounts, excluding transfers and returns in expense categories)
 	s.db.QueryRow(`
-		SELECT COALESCE(SUM(amount), 0) FROM transactions
-		WHERE transaction_date LIKE ? AND amount > 0 AND is_transfer = 0
+		SELECT COALESCE(SUM(t.amount), 0) FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.amount > 0 AND t.is_transfer = 0
+		  AND (c.is_expense = 0 OR c.is_expense IS NULL)
 	`, year+"%").Scan(&stats.TotalIncome)
 
 	stats.NetSavings = stats.TotalIncome - stats.TotalExpenses
@@ -294,8 +313,10 @@ func (s *Service) GetYearlyStats(year string) (*models.YearlyStats, error) {
 	prevYear := fmt.Sprintf("%d", yearInt-1)
 	var prevExpenses float64
 	s.db.QueryRow(`
-		SELECT COALESCE(SUM(ABS(amount)), 0) FROM transactions
-		WHERE transaction_date LIKE ? AND amount < 0 AND is_transfer = 0
+		SELECT COALESCE(SUM(-t.amount), 0) FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ? AND t.is_transfer = 0
+		  AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0))
 	`, prevYear+"%").Scan(&prevExpenses)
 
 	if prevExpenses > 0 {
@@ -319,11 +340,12 @@ func (s *Service) GetYearlyStats(year string) (*models.YearlyStats, error) {
 
 func (s *Service) getMonthlySpending(year string) ([]models.MonthlySpend, error) {
 	rows, err := s.db.Query(`
-		SELECT substr(transaction_date, 1, 7) as month,
-		       COALESCE(SUM(CASE WHEN amount < 0 AND is_transfer = 0 THEN ABS(amount) ELSE 0 END), 0),
-		       COALESCE(SUM(CASE WHEN amount > 0 AND is_transfer = 0 THEN amount ELSE 0 END), 0)
-		FROM transactions
-		WHERE transaction_date LIKE ?
+		SELECT substr(t.transaction_date, 1, 7) as month,
+		       COALESCE(SUM(CASE WHEN t.is_transfer = 0 AND (t.amount < 0 OR (c.is_expense = 1 AND t.amount > 0)) THEN -t.amount ELSE 0 END), 0),
+		       COALESCE(SUM(CASE WHEN t.amount > 0 AND t.is_transfer = 0 AND (c.is_expense = 0 OR c.is_expense IS NULL) THEN t.amount ELSE 0 END), 0)
+		FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.transaction_date LIKE ?
 		GROUP BY month
 		ORDER BY month
 	`, year+"%")

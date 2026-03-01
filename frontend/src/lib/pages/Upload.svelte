@@ -67,6 +67,12 @@
           <div class="text-2xl font-bold text-green-400">{result.newTransactions}</div>
           <div class="text-xs text-slate-400">Nya transaktioner</div>
         </div>
+        {#if result.updated > 0}
+        <div class="bg-slate-700/50 rounded-lg p-3">
+          <div class="text-2xl font-bold text-cyan-400">{result.updated}</div>
+          <div class="text-xs text-slate-400">Uppdaterade</div>
+        </div>
+        {/if}
         <div class="bg-slate-700/50 rounded-lg p-3">
           <div class="text-2xl font-bold text-slate-400">{result.duplicatesSkipped}</div>
           <div class="text-xs text-slate-400">Dubbletter (hoppades över)</div>
