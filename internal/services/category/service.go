@@ -74,7 +74,11 @@ func boolToInt(b bool) int {
 }
 
 func (s *Service) Delete(id int64) error {
-	_, err := s.db.Exec("DELETE FROM categories WHERE id=?", id)
+	_, err := s.db.Exec("UPDATE transactions SET category_id = NULL WHERE category_id = ?", id)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec("DELETE FROM categories WHERE id=?", id)
 	return err
 }
 
